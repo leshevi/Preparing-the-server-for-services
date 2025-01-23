@@ -1,0 +1,23 @@
+---
+
+- name: Preparing for installation dozzle
+  hosts: manager
+  become: true
+  tasks:
+    - name: Create a directory dozzle if it does not exist
+      ansible.builtin.file:
+        path: /home/ansible/dozzle/data
+        state: directory
+        mode: '0644'
+
+    - name: Read file join-comand.txt
+      ansible.builtin.command: "docker run amir20/dozzle generate --name admin --email y@yandex.ru --password secret admin"
+      register: user_dozzle
+      changed_when: false
+
+    - name: Create a file
+      ansible.builtin.shell: "user_dozzle.stdout >> /home/ansible/dozzle/data/users.yml"
+      args:
+        creates: /home/ansible/dozzle1/data/users.yml
+      changed_when: false
+
