@@ -1,0 +1,13 @@
+---
+- name: Preparing for installation nginx
+  hosts: leshevi
+  become: true
+  tasks:
+    - name: Copy our lending to /var/www/leshevi
+      ansible.builtin.copy:
+        src: "srv/leshevi"
+        dest: "/var/www/"
+        owner: "root"
+        group: "root"
+        mode: "0644"
+
