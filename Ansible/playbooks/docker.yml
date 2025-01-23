@@ -1,0 +1,104 @@
+---
+- name: Install Docker
+  hosts: leshevi
+  become: true
+  tasks:
+    - name: Update apt
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - sudo
+          - net-tools
+          - tcpdump
+          - vim
+          - ncdu
+          - htop
+          - openssl
+          - wget
+          - tree
+          - pip
+          - rsync
+          - ufw
+          - curl
+          - gnupg2
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+        state: present
+        update_cache: true
+
+    - name: Download Docker's official GPG key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/debian/gpg
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+        force: false
+
+    - name: Retrieve dpkg architecture
+      ansible.builtin.command: dpkg --print-architecture
+      register: dpkg_arch_result
+      changed_when: false
+
+    - name: Set dpkg architecture fact
+      ansible.builtin.set_fact:
+        dpkg_arch: "{{ dpkg_arch_result.stdout }}"
+
+    - name: Retrieve Debian version codename dynamically
+      ansible.builtin.shell: |
+        set -o pipefail && grep 'VERSION_CODENAME=' /etc/os-release | cut -d'=' -f2
+      args:
+        executable: /bin/bash
+      register: codename_result
+      changed_when: false
+
+    - name: Set version codename fact dynamically
+      ansible.builtin.set_fact:
+        version_codename: "{{ codename_result.stdout }}"
+
+    - name: Add Docker to sources list
+      ansible.builtin.lineinfile:
+        path: /etc/apt/sources.list.d/docker.list
+        line: "deb [arch={{ dpkg_arch }} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian {{ version_codename }} stable"
+        create: true
+        state: present
+        mode: '0644'
+
+    - name: Update apt-get
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install Docker and plugins
+      ansible.builtin.apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-buildx-plugin
+          - docker-compose-plugin
+          - python3-docker
+        state: present
+
+    - name: Add the user 'ansible'
+      ansible.builtin.user:
+        name: ansible
+        shell: /bin/bash
+        groups: docker
+        append: true
+
+    - name: Enable service httpd, and not touch the state
+      ansible.builtin.service:
+        name: docker
+        enabled: true
+      notify:
+        - Restart docker
+
+  handlers:
+    - name: Restart docker
+      ansible.builtin.service:
+        name: docker
+        state: restarted
+
