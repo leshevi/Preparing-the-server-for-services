@@ -1,7 +1,7 @@
 ---
 
 - name: Preparing for installation dozzle
-  hosts: manager
+  hosts: leshevi
   become: true
   tasks:
     - name: Create a directory dozzle if it does not exist
