@@ -1,0 +1,24 @@
+---
+- name: Preparing for installation Grafana in Prometheus
+  hosts: leshevi
+  become: true
+  tasks:
+    - name: Directory for prometheus conf
+      ansible.builtin.file:
+        path: /home/ansible/prometheus/conf
+        state: directory
+        mode: "0777"
+
+    - name: Directory for prometheus data
+      ansible.builtin.file:
+        path: /home/ansible/prometheus/data
+        state: directory
+        mode: "0777"
+
+    - name: Copy file prometheus
+      ansible.builtin.copy:
+        src: "srv/prometheus/"
+        dest: "/home/ansible/prometheus/conf/"
+        owner: "ansible"
+        group: "ansible"
+        mode: "0777"
